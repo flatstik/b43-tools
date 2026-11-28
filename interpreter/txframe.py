@@ -132,6 +132,9 @@ def main():
     if corerev >= 40:
         # the station's address is the TA of the frame it sends
         rxframe.amt_row(chip, 0x3F, frame[10:16], 0x8008)
+        # the channel the frame was queued on (b43_txhdr_ac's chanspec, header bytes 10-11) as B43_SHM_SH_CHAN: ucode42
+        # suppresses a frame whose chanspec differs from it (TX status supp reason 4, channel mismatch, every 5.8 us)
+        chip.m.shm[0x50] = hdr[10] | hdr[11] << 8
     if args.ampdu:
         if corerev < 40:
             raise SystemExit("--ampdu: the AC TX header, corerev 40+")
