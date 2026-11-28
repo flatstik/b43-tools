@@ -205,6 +205,9 @@ def main():
                     help="initvals and bsinitvals, where fwmatrix.py finds none")
     ap.add_argument("--mbps", type=float, default=None,
                     help="the frame's rate in Mb/s, for its air time (default 6)")
+    ap.add_argument("--crypto", nargs="?", const="start", default=None, metavar="PAD_RULE",
+                    help="corerev 40+: the RX crypto engine model (crypto.py); PAD_RULE start / always / never "
+                    "(how it counts the RXE's 2-byte pad; default start)")
     ap.add_argument("--rx-buffer", metavar="BYTES|chip", default=None,
                     help="cut a frame the ucode has not let stream at BYTES ('chip': the "
                     "RT-AC56U's size for the corerev, rxe.RX_BUFFER_CHIP)")
@@ -218,6 +221,8 @@ def main():
 
     name = args.ucode + ".fw"
     chip, corerev = setup(args.fwdir, args.ucode, args.initvals, args.phy_type)
+    if args.crypto:
+        chip.enable_crypto(args.crypto)
     if args.rx_buffer is not None:
         chip.rxe.rx_buffer = rxe.RX_BUFFER_CHIP.get(corerev) if args.rx_buffer == "chip" \
             else int(args.rx_buffer, 0)

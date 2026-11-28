@@ -303,6 +303,16 @@ class Chip:
             self.txe = txe.TxEngine40(self)
             self.watched |= set(txe.WATCHED40)
         self.watched |= {rxe.SPR_RXE_FIFOCTL1, rxe.SPR_RXE_LOOKUP40, rxe.SPR_RXE_MARK}
+        self.crypto = None              # crypto.CryptoEngine, opt-in: enable_crypto()
+
+    def enable_crypto(self, pad_rule=None):
+        """The corerev 40+ RX crypto engine model (crypto.py): CCMP frames
+        the ucode starts the engine on reach the host decrypted."""
+        import crypto
+        self.crypto = crypto.CryptoEngine(self, pad_rule)
+        self.crypto_watched = set(crypto.WATCHED)
+        self.watched |= self.crypto_watched
+        return self.crypto
 
     def spr_write(self, n, val):
         self.m.spr[n] = val & 0xFFFF
@@ -685,6 +695,8 @@ class Chip:
                 self.rxe.mark_written()
             elif n in (txe.WATCHED40 if self.hw.corerev >= 40 else txe.WATCHED):
                 self.txe.writes.append((n, new))
+        if self.crypto is not None and kind == "spr" and n in self.crypto_watched:
+            self.crypto.written(n, old, new)
         if self.recording:
             self.recorder.store(loc, old, new)
         if final != old:

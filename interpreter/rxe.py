@@ -788,6 +788,8 @@ class RxEngine:
             self.log.append((c.clock, "push, no RX DMA: SPR 0x290 bit 0 clear"))
         else:
             data = self.kept() if self.cut is None else self.frame.data[:self.cut]
+            if c.crypto is not None:
+                data = c.crypto.deliver(data, pad)
             self.fifo.append(Pushed(hdr, pad, data, c.clock, self.frame))
             self.log.append((c.clock, "push"))
         self.end()
